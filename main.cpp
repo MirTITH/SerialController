@@ -4,7 +4,6 @@
 //#include "stdafx.h"  
 #include "SerialPort.h"  
 #include <iostream>  
-#include <sstream>
 #include "conio.h"
 #include "keyboard.h"
 
@@ -39,10 +38,17 @@ void SendSpeed(double _speed, double _turnRatio)
 
 int main(int argc, char* argv[])
 {
+    int portNum = 3;
+    cout << "Please input serial port number." << endl;
+    cout << "The default value is " << portNum << endl;
+    cout << ">";
+    cin >> portNum;
+    cout << endl << "Opening COM " << portNum << endl;
     if (!mySerialPort.InitPort(3, CBR_115200))
     {
         std::cout << "initPort fail !" << std::endl;
-        getchar();
+        system("pause");
+        return -1;
     }
     else
     {
@@ -52,7 +58,8 @@ int main(int argc, char* argv[])
     if (!mySerialPort.OpenListenThread())
     {
         std::cout << "OpenListenThread fail !" << std::endl;
-        getchar();
+        system("pause");
+        return -1;
     }
     else
     {
@@ -63,6 +70,8 @@ int main(int argc, char* argv[])
 
     double speed = 0;
     double turnRatio = 0;
+
+    mySerialPort.WriteData("m\n", 2); // 切换到手动控制
 
     do
     {
