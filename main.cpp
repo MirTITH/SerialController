@@ -17,34 +17,37 @@ KeyInputSpeed inputSpeed;
 KeyInputTurnRatio inputTurnRatio;
 KeyInputEmergency inputEmergency;
 
-const double deltaTurnRatio = 0.02;
-const double deltaSpeed = 1;
+const double deltaTurnRatio = 0.05;
+const double deltaSpeed = 3;
+
+const double MAX_turnRatio = 0.2;
+const double MAX_speed = 50;
 
 void SendSpeed(double _speed, double _turnRatio)
 {
-    string setSpeed = "s=";
-    setSpeed += to_string(_speed);
-    setSpeed += "\n";
-
-    string setTurnRatio = "r=";
+    string setTurnRatio = "r ";
     setTurnRatio += to_string(_turnRatio);
     setTurnRatio += "\n";
 
-    cout << setSpeed.data() << setTurnRatio.data() << endl;
+    string setSpeed = "cs ";
+    setSpeed += to_string(_speed);
+    setSpeed += "\n";
+
+    //cout << setSpeed.data() << setTurnRatio.data() << endl;
     
-    mySerialPort.WriteData(setSpeed.data(), setSpeed.length());
     mySerialPort.WriteData(setTurnRatio.data(), setTurnRatio.length());
+    mySerialPort.WriteData(setSpeed.data(), setSpeed.length());
 }
 
 int main(int argc, char* argv[])
 {
-    int portNum = 3;
+    int portNum = 6;
     cout << "Please input serial port number." << endl;
     cout << "The default value is " << portNum << endl;
     cout << ">";
     cin >> portNum;
     cout << endl << "Opening COM " << portNum << endl;
-    if (!mySerialPort.InitPort(3, CBR_115200))
+    if (!mySerialPort.InitPort(portNum, CBR_115200))
     {
         std::cout << "initPort fail !" << std::endl;
         system("pause");
@@ -55,16 +58,16 @@ int main(int argc, char* argv[])
         std::cout << "initPort success !" << std::endl;
     }
 
-    if (!mySerialPort.OpenListenThread())
-    {
-        std::cout << "OpenListenThread fail !" << std::endl;
-        system("pause");
-        return -1;
-    }
-    else
-    {
-        std::cout << "OpenListenThread success !" << std::endl;
-    }
+    //if (!mySerialPort.OpenListenThread())
+    //{
+    //    std::cout << "OpenListenThread fail !" << std::endl;
+    //    system("pause");
+    //    return -1;
+    //}
+    //else
+    //{
+    //    std::cout << "OpenListenThread success !" << std::endl;
+    //}
 
     string powerOff = "s\n";
 
@@ -86,22 +89,20 @@ int main(int argc, char* argv[])
         {
         case Direct::up:
             speed += deltaSpeed;
-            cout << "up" << endl;
-            //SendSpeed(speed, turnRatio);
+            //cout << "up" << endl;
             break;
         case Direct::down:
             speed -= deltaSpeed;
-            cout << "down" << endl;
-            //SendSpeed(speed, turnRatio);
+            //cout << "down" << endl;
             break;
         case Direct::unassign:
-            if (speed > deltaSpeed / 2)
+            if (speed > deltaSpeed)
             {
-                speed -= deltaSpeed / 2;
+                speed -= deltaSpeed;
             }
-            else if (speed < -deltaSpeed / 2)
+            else if (speed < -deltaSpeed)
             {
-                speed += deltaSpeed / 2;
+                speed += deltaSpeed;
             }
             else
             {
@@ -119,12 +120,12 @@ int main(int argc, char* argv[])
         switch (inputTurnRatio.GetDir())
         {
         case Direct::left:
-            cout << "left" << endl;
+            //cout << "left" << endl;
             if (turnRatio < 0) turnRatio = 0;
             turnRatio += deltaTurnRatio;
             break;
         case Direct::right:
-            cout << "right" << endl;
+            //cout << "right" << endl;
             if (turnRatio > 0) turnRatio = 0;
             turnRatio -= deltaTurnRatio;
             break;
@@ -153,17 +154,31 @@ int main(int argc, char* argv[])
         {
         case Direct::brake:
             cout << "brake" << endl;
-            speed = 0;
-            turnRatio = 0;
-            SendSpeed(0, 0);
+            if (speed > 7)
+            {
+                speed -= 6;
+            }
+            else if (speed < -7)
+            {
+                speed += 6;
+            }
+            else
+            {
+                speed = 0;
+            }
+            SendSpeed(speed, turnRatio);
             break;
         case Direct::stop:
             cout << "stop" << endl;
             mySerialPort.WriteData(powerOff.data(), powerOff.length());
             break;
         case Direct::unassign:
-            if (turnRatio > 1) turnRatio = 1;
-            if (turnRatio < -1) turnRatio = -1;
+            if (turnRatio > MAX_turnRatio) turnRatio = MAX_turnRatio;
+            if (turnRatio < -MAX_turnRatio) turnRatio = -MAX_turnRatio;
+
+            if (speed > MAX_speed) speed = MAX_speed;
+            if (speed < -MAX_speed) speed = -MAX_speed;
+
             cout << "s " << speed << "\tr " << turnRatio << endl;
             SendSpeed(speed, turnRatio);
             break;
