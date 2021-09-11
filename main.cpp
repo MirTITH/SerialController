@@ -6,108 +6,163 @@
 #include <iostream>  
 #include <sstream>
 #include "conio.h"
+#include "keyboard.h"
 
 using namespace std;
 
 stringstream SerialBuff;
 
+CSerialPort mySerialPort;
+
+KeyInputSpeed inputSpeed;
+KeyInputTurnRatio inputTurnRatio;
+KeyInputEmergency inputEmergency;
+
+const double deltaTurnRatio = 0.02;
+const double deltaSpeed = 1;
+
+void SendSpeed(double _speed, double _turnRatio)
+{
+    string setSpeed = "s=";
+    setSpeed += to_string(_speed);
+    setSpeed += "\n";
+
+    string setTurnRatio = "r=";
+    setTurnRatio += to_string(_turnRatio);
+    setTurnRatio += "\n";
+
+    cout << setSpeed.data() << setTurnRatio.data() << endl;
+    
+    mySerialPort.WriteData(setSpeed.data(), setSpeed.length());
+    mySerialPort.WriteData(setTurnRatio.data(), setTurnRatio.length());
+}
+
 int main(int argc, char* argv[])
 {
-
-    CSerialPort mySerialPort;
-
-    if (!mySerialPort.InitPort(7, CBR_115200))
+    if (!mySerialPort.InitPort(3, CBR_115200))
     {
         std::cout << "initPort fail !" << std::endl;
+        getchar();
     }
     else
     {
         std::cout << "initPort success !" << std::endl;
     }
 
-    //if (!mySerialPort.OpenListenThread())
-    //{
-    //    std::cout << "OpenListenThread fail !" << std::endl;
-    //}
-    //else
-    //{
-    //    std::cout << "OpenListenThread success !" << std::endl;
-    //}
+    if (!mySerialPort.OpenListenThread())
+    {
+        std::cout << "OpenListenThread fail !" << std::endl;
+        getchar();
+    }
+    else
+    {
+        std::cout << "OpenListenThread success !" << std::endl;
+    }
 
-    string goForward = "s=90\n";
-    string goForward1 = "s=50\n";
-    string goBackward = "s=-50\n";
-    string turnLeft = "tl=20\n";
-    string turnRight = "tl=-20\n";
-    string goStraight = "tl=0\n";
-    string carStop = "s=0\n";
-    string SharpTurnRight = "tl=-27\n";
-    string SharpTurnLeft = "tl=27\n";
-    string powerOff = "\'\n";
-    string powerOn = "$\n";
+    string powerOff = "s\n";
 
-    // bool isGoForward = true;
-    //std::cin >> temp;
-
-    //mySerialPort.WriteData(temp, 20);
+    double speed = 0;
+    double turnRatio = 0;
 
     do
     {
-        Sleep(10);
-        //cout << SerialBuff.str();
-        //SerialBuff.str("");
-        if (_kbhit())
+        Sleep(100);
+
+        inputSpeed.Update();
+        inputTurnRatio.Update();
+        inputEmergency.Update();
+
+        // 速度控制
+        switch (inputSpeed.GetDir())
         {
-            switch (_getch())
+        case Direct::up:
+            speed += deltaSpeed;
+            cout << "up" << endl;
+            //SendSpeed(speed, turnRatio);
+            break;
+        case Direct::down:
+            speed -= deltaSpeed;
+            cout << "down" << endl;
+            //SendSpeed(speed, turnRatio);
+            break;
+        case Direct::unassign:
+            if (speed > deltaSpeed / 2)
             {
-            case 'w':
-                //cout << "w" << endl;
-                mySerialPort.WriteData(goForward.data(), goForward.length());
-                Sleep(50);
-                mySerialPort.WriteData(goStraight.data(), goStraight.length());
-                break;
-            case 's':
-                //cout << "s" << endl;
-                mySerialPort.WriteData(goBackward.data(), goBackward.length());
-                Sleep(50);
-                mySerialPort.WriteData(goStraight.data(), goStraight.length());
-                break;
-            case 'a':
-                //cout << "a" << endl;
-                mySerialPort.WriteData(turnLeft.data(), turnLeft.length());
-                break;
-            case 'd':
-                //cout << "d" << endl;
-                mySerialPort.WriteData(turnRight.data(), turnRight.length());
-                break;
-            case 'e':
-                //mySerialPort.WriteData(goForward1.data(), goForward1.length());
-                mySerialPort.WriteData(SharpTurnRight.data(), SharpTurnRight.length());
-                break;
-            case 'q':
-                //mySerialPort.WriteData(goForward1.data(), goForward1.length());
-                mySerialPort.WriteData(SharpTurnLeft.data(), SharpTurnLeft.length());
-                break;
-            case '\'':
-                mySerialPort.WriteData(powerOff.data(), powerOff.length());
-                break;
-            case '\\':
-                mySerialPort.WriteData(powerOn.data(), powerOn.length());
-                break;
-            case ' ':
-                //cout << "break" << endl;
-                mySerialPort.WriteData(carStop.data(), carStop.length());
-                break;
-            default:
-                break;
-            } 
+                speed -= deltaSpeed / 2;
+            }
+            else if (speed < -deltaSpeed / 2)
+            {
+                speed += deltaSpeed / 2;
+            }
+            else
+            {
+                speed = 0;
+            }
+
+            break;
+        default:
+            cout << "inputSpeed default" << endl;
+            break;
         }
-        //else
-        //{
-        //    //cout << "go straight" << endl;
-        //    mySerialPort.WriteData(goStraight, 20);
-        //}
+
         
+        // 转向控制
+        switch (inputTurnRatio.GetDir())
+        {
+        case Direct::left:
+            cout << "left" << endl;
+            if (turnRatio < 0) turnRatio = 0;
+            turnRatio += deltaTurnRatio;
+            break;
+        case Direct::right:
+            cout << "right" << endl;
+            if (turnRatio > 0) turnRatio = 0;
+            turnRatio -= deltaTurnRatio;
+            break;
+        case Direct::unassign:
+            if (turnRatio > 4 * deltaTurnRatio)
+            {
+                turnRatio -= 4 * deltaTurnRatio;
+            }
+            else if (turnRatio < -4 * deltaTurnRatio)
+            {
+                turnRatio += 4 * deltaTurnRatio;
+            }
+            else
+            {
+                turnRatio = 0;
+            }
+
+            break;
+        default:
+            cout << "inputTurnRatio default" << endl;
+            break;
+        }
+
+        // 紧急控制
+        switch (inputEmergency.GetDir())
+        {
+        case Direct::brake:
+            cout << "brake" << endl;
+            speed = 0;
+            turnRatio = 0;
+            SendSpeed(0, 0);
+            break;
+        case Direct::stop:
+            cout << "stop" << endl;
+            mySerialPort.WriteData(powerOff.data(), powerOff.length());
+            break;
+        case Direct::unassign:
+            if (turnRatio > 1) turnRatio = 1;
+            if (turnRatio < -1) turnRatio = -1;
+            cout << "s " << speed << "\tr " << turnRatio << endl;
+            SendSpeed(speed, turnRatio);
+            break;
+        default:
+            cout << "inputEmergency default" << endl;
+            break;
+        }
+
     } while (1);
     
     return 0;
