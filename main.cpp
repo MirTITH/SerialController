@@ -1,5 +1,17 @@
-// main.cpp : Defines the entry point for the console application.  
-//  
+ï»¿/**
+* COPYRIGHT NOTICE 
+* Copyright (c) 2021, MirTITH (https://github.com/MirTITH/)
+* All rights reserved. 
+*   
+* @file    main.cpp 
+* @brief   Defines the entry point for the console application. 
+*   
+* @author  è°¢é˜³
+* @version See const string VERSION
+* @emailï¼š200320620@stu.hit.edu.cn
+* @date    2021/09/12
+* #license GNU 2.0
+*/ 
 
 //#include "stdafx.h"  
 #include "SerialPort.h"  
@@ -9,6 +21,8 @@
 
 using namespace std;
 
+const string VERSION = "1.0";
+
 stringstream SerialBuff;
 
 CSerialPort mySerialPort;
@@ -17,11 +31,11 @@ KeyInputSpeed inputSpeed;
 KeyInputTurnRatio inputTurnRatio;
 KeyInputEmergency inputEmergency;
 
-const double deltaTurnRatio = 0.05;
+const double deltaTurnRatio = 0.07;
 const double deltaSpeed = 3;
 
-const double MAX_turnRatio = 0.2;
-const double MAX_speed = 50;
+const double MAX_turnRatio = 0.25;
+const double MAX_speed = 40;
 
 void SendSpeed(double _speed, double _turnRatio)
 {
@@ -42,8 +56,21 @@ void SendSpeed(double _speed, double _turnRatio)
 int main(int argc, char* argv[])
 {
     int portNum = 6;
+    cout << "Serial Controller \tVer. " << VERSION << endl;
+    cout << "Copyright(C) 2021, MirTITH (https://github.com/MirTITH/)" << endl;
+    cout << "All rights reserved." << endl;
+    cout << endl;
+    cout << "Author: è°¢é˜³(Xie Yang)" << endl;
+    cout << "E-mail: 200320620@stu.hit.edu.cn" << endl;
+    cout << "github: https://github.com/MirTITH/" << endl;
+    cout << "gitee: https://gitee.com/tithchan" << endl;
+    cout << endl;
+
+    cout << "Manual:" << endl;
+    cout << "Use w,s,a,d to run the car." << endl;
+    cout << "Use [space] to brake." << endl;
+    cout << "Use [shift] to turn off the motor." << endl << endl;
     cout << "Please input serial port number." << endl;
-    cout << "The default value is " << portNum << endl;
     cout << ">";
     cin >> portNum;
     cout << endl << "Opening COM " << portNum << endl;
@@ -74,7 +101,7 @@ int main(int argc, char* argv[])
     double speed = 0;
     double turnRatio = 0;
 
-    mySerialPort.WriteData("m\n", 2); // ÇÐ»»µ½ÊÖ¶¯¿ØÖÆ
+    mySerialPort.WriteData("m\n", 2); // åˆ‡æ¢åˆ°æ‰‹åŠ¨æŽ§åˆ¶
 
     do
     {
@@ -84,15 +111,29 @@ int main(int argc, char* argv[])
         inputTurnRatio.Update();
         inputEmergency.Update();
 
-        // ËÙ¶È¿ØÖÆ
+        // é€Ÿåº¦æŽ§åˆ¶
         switch (inputSpeed.GetDir())
         {
         case Direct::up:
-            speed += deltaSpeed;
+            if (speed >= 0)
+            {
+                speed += deltaSpeed;
+            }
+            else
+            {
+                speed += 2 * deltaSpeed;
+            }
             //cout << "up" << endl;
             break;
         case Direct::down:
-            speed -= deltaSpeed;
+            if (speed <= 0)
+            {
+                speed -= deltaSpeed;
+            }
+            else
+            {
+                speed -= 2 * deltaSpeed;
+            }
             //cout << "down" << endl;
             break;
         case Direct::unassign:
@@ -116,7 +157,7 @@ int main(int argc, char* argv[])
         }
 
         
-        // ×ªÏò¿ØÖÆ
+        // è½¬å‘æŽ§åˆ¶
         switch (inputTurnRatio.GetDir())
         {
         case Direct::left:
@@ -130,13 +171,13 @@ int main(int argc, char* argv[])
             turnRatio -= deltaTurnRatio;
             break;
         case Direct::unassign:
-            if (turnRatio > 4 * deltaTurnRatio)
+            if (turnRatio > 3 * deltaTurnRatio)
             {
-                turnRatio -= 4 * deltaTurnRatio;
+                turnRatio -= 3 * deltaTurnRatio;
             }
-            else if (turnRatio < -4 * deltaTurnRatio)
+            else if (turnRatio < -3 * deltaTurnRatio)
             {
-                turnRatio += 4 * deltaTurnRatio;
+                turnRatio += 3 * deltaTurnRatio;
             }
             else
             {
@@ -149,7 +190,7 @@ int main(int argc, char* argv[])
             break;
         }
 
-        // ½ô¼±¿ØÖÆ
+        // ç´§æ€¥æŽ§åˆ¶
         switch (inputEmergency.GetDir())
         {
         case Direct::brake:
@@ -167,9 +208,26 @@ int main(int argc, char* argv[])
                 speed = 0;
             }
             SendSpeed(speed, turnRatio);
+            //cout << "stop" << endl;
+            //mySerialPort.WriteData(powerOff.data(), powerOff.length());
             break;
         case Direct::stop:
-            cout << "stop" << endl;
+            //cout << "brake" << endl;
+            //if (speed > 7)
+            //{
+            //    speed -= 6;
+            //}
+            //else if (speed < -7)
+            //{
+            //    speed += 6;
+            //}
+            //else
+            //{
+            //    speed = 0;
+            //}
+            //SendSpeed(speed, turnRatio);
+            cout << "s " << speed << "\tr " << turnRatio;
+            cout << "\tstop" << endl;
             mySerialPort.WriteData(powerOff.data(), powerOff.length());
             break;
         case Direct::unassign:
