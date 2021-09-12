@@ -10,7 +10,7 @@
 * @version See const string VERSION
 * @email：200320620@stu.hit.edu.cn
 * @date    2021/09/12
-* #license GNU 2.0
+* #license GPL 2.0
 */ 
 
 //#include "stdafx.h"  
