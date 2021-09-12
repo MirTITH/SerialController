@@ -224,7 +224,7 @@ public:
 	void Update()
 	{
 		brake(GetAsyncKeyState(32));// space
-		stop(GetAsyncKeyState(20));// Cape Lock
+		stop(GetAsyncKeyState(VK_SHIFT));// SHIFT
 	}
 
 	void brake(bool IsDown)
