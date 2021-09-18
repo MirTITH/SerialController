@@ -1,17 +1,30 @@
 ﻿/**
-* COPYRIGHT NOTICE 
-* Copyright (c) 2021, MirTITH (https://github.com/MirTITH/)
+* This file is part of SerialController. 
+* Copyright (C) 2021 Xie Yang. 
 * All rights reserved. 
+* 
+* @file     main.cpp 
+* @brief    Defines the entry point for the console application. 
 *   
-* @file    main.cpp 
-* @brief   Defines the entry point for the console application. 
-*   
-* @author  谢阳
-* @version See const string VERSION
-* @email：200320620@stu.hit.edu.cn
-* @date    2021/09/12
-* #license GPL 2.0
-*/ 
+* @author   谢阳 (Xie Yang)
+* @version  (See const string VERSION)
+* @email    200320620@stu.hit.edu.cn
+* @date     2021/09/12
+* 
+* SerialController is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* any later version.
+*
+* SerialController is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along
+* with SerialController; if not, write to the Free Software Foundation, Inc.,
+* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
 
 //#include "stdafx.h"  
 #include "SerialPort.h"  
